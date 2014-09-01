@@ -2,6 +2,7 @@
 #include <SDL2/SDL2_gfxPrimitives.h>
 #include <math.h>
 #include <stdbool.h>
+#include "savepng.h" // includes <png.h>, you must link with -lpng
 
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #define MAX(a, b) ((a) < (b) ? (a) : (b))
@@ -18,6 +19,8 @@ SDL_Window* window = NULL;
 	
 /* The window surface */
 SDL_Surface* screen = NULL;
+
+SDL_Surface* shot = NULL;
 
 /* The event structure */
 SDL_Event event;
@@ -47,7 +50,7 @@ void makeArrow( SDL_Renderer* gr, double vx, double vy, double originX, double o
       }
       else
       {
-         filledTrigonRGBA(gRenderer, originX + x, originY - y, originX + x + arrowX, originY - y - arrowY, originX + x - arrowX, originY - y + arrowY, 0, 0, 0, 255);
+         filledTrigonRGBA(gRenderer, originX + x, originY - y, originX + x + arrowX, originY - y - arrowY, originX + x - arrowX, originY - y - arrowY, 0, 0, 0, 255);
       }
    }
    else
@@ -137,7 +140,6 @@ int main( int argc, char* argv[] )
       printf( "Renderer could not be created! SDL Error: %s\n", SDL_GetError() );
    }
    
-   screen = SDL_GetWindowSurface( window );
    //image = SDL_LoadBMP( "sdl_logo.bmp" );
    while( running )
    {
@@ -189,9 +191,9 @@ int main( int argc, char* argv[] )
             SDL_RenderDrawLine( gRenderer, WINDOW_WIDTH * (target[0] / width), WINDOW_HEIGHT - (WINDOW_HEIGHT * (target[1] / height)) + 1, WINDOW_WIDTH * (target[2] / width), WINDOW_HEIGHT - (WINDOW_HEIGHT * (target[3] / height)) + 1 );
             SDL_RenderDrawLine( gRenderer, WINDOW_WIDTH * (target[0] / width), WINDOW_HEIGHT - (WINDOW_HEIGHT * (target[1] / height)) + 1, WINDOW_WIDTH * (target[2] / width), WINDOW_HEIGHT - (WINDOW_HEIGHT * (target[3] / height)) + 1 );
          }
-         SDL_SetRenderDrawColor( gRenderer, 0x00, 0x00, 0xFF, 0xFF );
-         for (i = 0; i < numberOfIntervals; ++i) //lines
-         {
+         //SDL_SetRenderDrawColor( gRenderer, 0x00, 0x00, 0xFF, 0xFF );
+         //for (i = 0; i < numberOfIntervals; ++i) //lines
+         /*{
             if (intervals[i * 8] >= target[0] && intervals[(i * 8) + 1] >= target[1] && intervals[(i * 8) + 2] <= target[2] && intervals[(i * 8) + 3] <= target[3])
             {
                SDL_SetRenderDrawColor( gRenderer, 0xFF, 0x00, 0xFF, 0xFF);
@@ -211,7 +213,7 @@ int main( int argc, char* argv[] )
             {
                SDL_SetRenderDrawColor( gRenderer, 0x00, 0x00, 0xFF, 0xFF);
             }
-            /*if (intervals[(i * 8) + 4] != -1)
+            if (intervals[(i * 8) + 4] != -1)
             {
                if ((intervals[i * 8] == intervals[(i * 8) + 4] && intervals[(i * 8) + 1] == intervals[(i * 8) + 5]) || (intervals[(i * 8) + 2] == intervals[(i * 8) + 6] && intervals[(i * 8) + 3] == intervals[(i * 8) + 7]))
                {
@@ -235,28 +237,34 @@ int main( int argc, char* argv[] )
                }
                else
                {
-                  double A1 = intervals[(i * 8) + 3] - intervals[(i * 8) + 1];
-                  double A2 = intervals[(i * 8) + 7] - intervals[(i * 8) + 5];
-                  double B1 = intervals[i * 8] - intervals[(i * 8) + 2];
-                  double B2 = intervals[(i * 8) + 4] - intervals[(i * 8) + 6];
-                  double C1 = (A1 * intervals[i * 8]) + (B1 * intervals[(i * 8) + 1]);
-                  double C2 = (A2 * intervals[(i * 8) + 4]) + (B2 * intervals[(i * 8) + 5]);
+                  //double A1 = intervals[(i * 8) + 7] - intervals[(i * 8) + 5];
+                  //double A2 = intervals[(i * 8) + 3] - intervals[(i * 8) + 1];
+                  //double B1 = intervals[(i * 8) + 4] - intervals[(i * 8) + 6];
+                  //double B2 = intervals[i * 8] - intervals[(i * 8) + 2];
+                  //double C1 = (A1 * intervals[(i * 8) + 4]) + (B1 * intervals[(i * 8) + 5]);
+                  //double C2 = (A2 * intervals[i * 8]) + (B2 * intervals[(i * 8) + 1]);
+                  double A1 = intervals[(i * 8) + 3] - intervals[(i * 8) + 5];
+                  double A2 = intervals[(i * 8) + 1] - intervals[(i * 8) + 7];
+                  double B1 = intervals[(i * 8) + 4] - intervals[(i * 8) + 2];
+                  double B2 = intervals[(i * 8) + 6] - intervals[i * 8];
+                  double C1 = A1*intervals[(i * 8) + 4] + B1*intervals[(i * 8) + 5];
+                  double C2 = A2*intervals[(i * 8) + 6] + B2*intervals[(i * 8) + 7];
                   double d = (A1 * B2) - (A2 * B1);
                   double intersectionX = (((B2 * C1) - (B1 * C2)) / d);
                   double intersectionY = (((A1 * C2) - (A2 * C1)) / d);
-                  if (intersectionX > MIN(intervals[i * 8], MIN(intervals[(i * 8) + 2], MIN(intervals[(i * 8) + 4], intervals[(i * 8) + 6]))) && intersectionX < MAX(intervals[i * 8], MAX(intervals[(i * 8) + 2], MAX(intervals[(i * 8) + 4], intervals[(i * 8) + 6]))) && intersectionY > MIN(intervals[(i * 8) + 1], MIN(intervals[(i * 8) + 3], MIN(intervals[(i * 8) + 5], intervals[(i * 8) + 7]))) && intersectionY < MAX(intervals[(i * 8) + 1], MAX(intervals[(i * 8) + 3], MAX(intervals[(i * 8) + 5], intervals[(i * 8) + 7]))))
-                  {
-                     SDL_RenderDrawLine( gRenderer, WINDOW_WIDTH * (intervals[i * 8] / width), WINDOW_HEIGHT - (WINDOW_HEIGHT * (intervals[(i * 8) + 1] / height)), WINDOW_WIDTH * (intervals[(i * 8) + 6] / width), WINDOW_HEIGHT - (WINDOW_HEIGHT * (intervals[(i * 8) + 7] / height)) );
-                     SDL_RenderDrawLine( gRenderer, WINDOW_WIDTH * (intervals[(i * 8) + 2] / width), WINDOW_HEIGHT - (WINDOW_HEIGHT * (intervals[(i * 8) + 3] / height)), WINDOW_WIDTH * (intervals[(i * 8) + 4] / width), WINDOW_HEIGHT - (WINDOW_HEIGHT * (intervals[(i * 8) + 5] / height)) );
-                  }
-                  else
+                  if (intersectionX >= MIN(intervals[i * 8], MIN(intervals[(i * 8) + 2], MIN(intervals[(i * 8) + 4], intervals[(i * 8) + 6]))) && intersectionX <= MAX(intervals[i * 8], MAX(intervals[(i * 8) + 2], MAX(intervals[(i * 8) + 4], intervals[(i * 8) + 6]))) && intersectionY >= MIN(intervals[(i * 8) + 1], MIN(intervals[(i * 8) + 3], MIN(intervals[(i * 8) + 5], intervals[(i * 8) + 7]))) && intersectionY <= MAX(intervals[(i * 8) + 1], MAX(intervals[(i * 8) + 3], MAX(intervals[(i * 8) + 5], intervals[(i * 8) + 7]))))
                   {
                      SDL_RenderDrawLine( gRenderer, WINDOW_WIDTH * (intervals[i * 8] / width), WINDOW_HEIGHT - (WINDOW_HEIGHT * (intervals[(i * 8) + 1] / height)), WINDOW_WIDTH * (intervals[(i * 8) + 4] / width), WINDOW_HEIGHT - (WINDOW_HEIGHT * (intervals[(i * 8) + 5] / height)) );
                      SDL_RenderDrawLine( gRenderer, WINDOW_WIDTH * (intervals[(i * 8) + 2] / width), WINDOW_HEIGHT - (WINDOW_HEIGHT * (intervals[(i * 8) + 3] / height)), WINDOW_WIDTH * (intervals[(i * 8) + 6] / width), WINDOW_HEIGHT - (WINDOW_HEIGHT * (intervals[(i * 8) + 7] / height)) );
                   }
+                  else
+                  {
+                     SDL_RenderDrawLine( gRenderer, WINDOW_WIDTH * (intervals[i * 8] / width), WINDOW_HEIGHT - (WINDOW_HEIGHT * (intervals[(i * 8) + 1] / height)), WINDOW_WIDTH * (intervals[(i * 8) + 6] / width), WINDOW_HEIGHT - (WINDOW_HEIGHT * (intervals[(i * 8) + 7] / height)) );
+                     SDL_RenderDrawLine( gRenderer, WINDOW_WIDTH * (intervals[(i * 8) + 2] / width), WINDOW_HEIGHT - (WINDOW_HEIGHT * (intervals[(i * 8) + 3] / height)), WINDOW_WIDTH * (intervals[(i * 8) + 4] / width), WINDOW_HEIGHT - (WINDOW_HEIGHT * (intervals[(i * 8) + 5] / height)) );
+                  }
                }
-            }*/
-         }
+            }
+         }*/
          for (i = 0; i < numberOfIntervals; ++i) //area
          {
             if (intervals[(i * 8) + 4] != -1)
@@ -279,25 +287,17 @@ int main( int argc, char* argv[] )
             SDL_RenderDrawLine( gRenderer, WINDOW_WIDTH * (initial[0] / width), WINDOW_HEIGHT - (WINDOW_HEIGHT * (initial[1] / height)) + 1, WINDOW_WIDTH * (initial[2] / width), WINDOW_HEIGHT - (WINDOW_HEIGHT * (initial[3] / height)) + 1 );
             SDL_RenderDrawLine( gRenderer, WINDOW_WIDTH * (initial[0] / width), WINDOW_HEIGHT - (WINDOW_HEIGHT * (initial[1] / height)) + 1, WINDOW_WIDTH * (initial[2] / width), WINDOW_HEIGHT - (WINDOW_HEIGHT * (initial[3] / height)) + 1 );
          }
-         /*SDL_SetRenderDrawColor( gRenderer, 0xFF, 0x00, 0x00, 0xFF);
-         SDL_RenderDrawLine( gRenderer, WINDOW_WIDTH * (target[0] / width), WINDOW_HEIGHT - (WINDOW_HEIGHT * (target[1] / height)), WINDOW_WIDTH * (target[2] / width), WINDOW_HEIGHT - (WINDOW_HEIGHT * (target[3] / height)) );
-         if (target[0] == target[2])
-         {
-            SDL_RenderDrawLine( gRenderer, (WINDOW_WIDTH * (target[0] / width)) + 1, WINDOW_HEIGHT - (WINDOW_HEIGHT * (target[1] / height)), (WINDOW_WIDTH * (target[2] / width)) + 1, WINDOW_HEIGHT - (WINDOW_HEIGHT * (target[3] / height)) );
-            SDL_RenderDrawLine( gRenderer, (WINDOW_WIDTH * (target[0] / width)) - 1, WINDOW_HEIGHT - (WINDOW_HEIGHT * (target[1] / height)), (WINDOW_WIDTH * (target[2] / width)) - 1, WINDOW_HEIGHT - (WINDOW_HEIGHT * (target[3] / height)) );
-         }
-         else
-         {
-            SDL_RenderDrawLine( gRenderer, WINDOW_WIDTH * (target[0] / width), WINDOW_HEIGHT - (WINDOW_HEIGHT * (target[1] / height)) + 1, WINDOW_WIDTH * (target[2] / width), WINDOW_HEIGHT - (WINDOW_HEIGHT * (target[3] / height)) + 1 );
-            SDL_RenderDrawLine( gRenderer, WINDOW_WIDTH * (target[0] / width), WINDOW_HEIGHT - (WINDOW_HEIGHT * (target[1] / height)) + 1, WINDOW_WIDTH * (target[2] / width), WINDOW_HEIGHT - (WINDOW_HEIGHT * (target[3] / height)) + 1 );
-         }*/
       }
       SDL_RenderPresent(gRenderer);
       //SDL_BlitSurface( image, NULL, screen, NULL );
-      //SDL_UpdateWindowSurface( window );
+      SDL_UpdateWindowSurface( window );
    }
+   screen = SDL_GetWindowSurface( window );
+   shot = SDL_PNGFormatAlpha(screen);
+   SDL_SavePNG(shot, "screen.png");
+   SDL_FreeSurface(shot);
  }
- SDL_FreeSurface( image );
+ //SDL_FreeSurface( image );
  SDL_DestroyWindow( window );
  SDL_DestroyRenderer( gRenderer );
  SDL_Quit();
